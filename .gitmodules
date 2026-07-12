@@ -1,0 +1,6 @@
+[submodule "http_client"]
+	path = http_client
+	url = https://github.com/sudhanshu8833/NETWORKING_CLIENT.git
+[submodule "cost_of_operations"]
+	path = cost_of_operations
+	url = https://github.com/sudhanshu8833/cost_of_operations-c-.git
