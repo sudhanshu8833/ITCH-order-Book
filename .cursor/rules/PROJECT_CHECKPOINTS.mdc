@@ -129,15 +129,24 @@ Ordered by **skill transfer to low-latency market-data engineering**, not raw di
 > One deep, continuously-optimized book beats several shallow projects. Target of every later upgrade.
 
 ### SP 5 — Correctness-first book  ⏱ 4 d
-- [ ] 🔴 `std::map` price levels, driven by the Phase 2 parser (all four message types)
-- [ ] 🔴 Book-state validated against recorded data
-- **Output:** a replay tool reconstructing final book state, diffed against ground truth.
+- [x] 🔴 `std::map` price levels, driven by the Phase 2 parser (all four message types) — bid/ask as nested
+      `std::map<symbol, std::map<price, node>>`; A/F/E/C/X/D/U handlers + `unordered_map<ref, Order>` for by-ref lookup
+- [x] 🔴 Book-state validated against recorded data — `.at()` enforces "ref must exist" (consistent order IDs, the
+      SP4 carry-over), per-message desync guards (book shares can't go negative), and a crossed-book invariant
+      (best bid < best ask via `validate_book`). NASDAQ ships no canonical book to diff, so "validated" = these
+      invariants holding across the full replay.
+- **Output:** replay reconstructs top-of-book via `get_book` (rbegin bids / begin asks); compiles clean, book prints.
+      ⚠️ Strongest proof = a clean run over the full ~1.7M-msg file with **zero desync / crossed-book** — confirm that ran.
+- 📊 **BASELINE latency (std::map book) — the "before" number for SP6:** per-update **p50 609 ns, p99 1656 ns**.
+      This is the figure the SP6 flat-array rewrite must beat; hold measurement conditions (warm, DoNotOptimize, same
+      replay) identical when re-measuring the flat book so the before/after is apples-to-apples.
 
 ### SP 6 — Cache-optimized rewrite  ⏱ 4 d
 - [ ] 🔴 Flat-array / intrusive-container price levels (migrate off `std::map`)
 - [ ] 🔴 Hot/cold data separation: top-of-book compact & contiguous; deep levels stored separately
 - [ ] 🔴 Zero allocations on the update hot path — **proven** via aborting `operator new` in the hot loop
 - **Output:** a before/after benchmark graph (`std::map` vs flat array) + a zero-alloc proof log.
+      Target to beat: **p50 609 ns / p99 1656 ns** (the SP5 std::map baseline above).
 
 ### SP 7 — Sequence-gap handling  ⏱ 2 d
 - [ ] 🔴 Sequence-gap detection

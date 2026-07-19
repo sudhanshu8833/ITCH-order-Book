@@ -2,13 +2,28 @@
 set -e
 
 IMAGE=itch_parser
-TARGET=${1:-itch_parser}   # pass a target name, e.g. ./run.sh stride_1_16
+REBUILD=0
+TARGET=itch_parser        # default target; override: ./run.sh <target>
 
-# Build the deps-only image. After the first time this is a cached no-op
-# (the Dockerfile no longer copies source, so nothing invalidates the layers).
-docker build -t "$IMAGE" .
+# --- args: -b forces an image rebuild; any other arg is the cmake target ---
+for arg in "$@"; do
+    case "$arg" in
+        -b) REBUILD=1 ;;
+        *)  TARGET="$arg" ;;
+    esac
+done
 
-# Bind-mount the current dir into /app, then ONLY compile + run inside the container.
-# cmake reconfigures fast; cmake --build recompiles just the changed file.
+# --- build the deps image ONLY when asked (-b) or when it doesn't exist yet ---
+# Normal edit-run cycles skip this entirely: no context transfer, no cache growth.
+if [ "$REBUILD" = "1" ] || [ -z "$(docker images -q "$IMAGE" 2>/dev/null)" ]; then
+    echo ">> (re)building image '$IMAGE'"
+    docker build -t "$IMAGE" .
+fi
+
+# --- compile + run inside a throwaway container ---
+# Source (and build/) are bind-mounted from the host, so your edits are "transported"
+# live and cmake recompiles ONLY the changed files. Container is discarded (--rm).
 docker run --rm -v "$(pwd):/app" "$IMAGE" \
-    sh -c "cmake -S . -B build && cmake --build build && ./build/$TARGET"
+    sh -c "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release >/dev/null && \
+           cmake --build build && \
+           ./build/$TARGET"

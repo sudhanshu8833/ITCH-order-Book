@@ -1,0 +1,13 @@
+# Keep the Docker build context tiny and STABLE so `docker build` stays a cache no-op.
+# Nothing here is needed to build the deps-only image (source is bind-mounted at run time).
+build/
+*.o
+*.bin
+*.gz
+a.out
+.git/
+.gitignore
+.vscode/
+.cursor/
+.DS_Store
+run.sh

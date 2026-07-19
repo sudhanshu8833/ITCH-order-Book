@@ -97,7 +97,7 @@ int parse_message(const unsigned char* data, int size){
 
         if (count % 1 == 0){
             book_map b = order_book.get_book("AMZN", 10);
-            b.validate_book();
+            b.print_struct();
         }
         i+=length;
     }
@@ -136,12 +136,12 @@ int main(){
     std::unordered_map<std::string, double> m{
         {"50", 0.50 * SAMPLE_SIZE},
         {"99", 0.99 * SAMPLE_SIZE},
-        {"99.9", 0.999 * SAMPLE_SIZE}
+        // {"99.9", 0.999 * SAMPLE_SIZE}
     };
 
     ss<< "50th percentile: "<< result[(int)m["50"]]<<std::endl;
     ss << "99th percentile: "<< result[(int)m["99"]] << std::endl;
-    ss<< "99.9 percentile: "<< result[(int)m["99.9"]] << std::endl;
+    // ss<< "99.9 percentile: "<< result[(int)m["99.9"]] << std::endl;
     std::cout<< ss.str()<<std::endl;
 
     return 0;
