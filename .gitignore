@@ -3,3 +3,6 @@
 *.gz
 *.bin
 build/
+**/build/
+**/result.md
+results.md
