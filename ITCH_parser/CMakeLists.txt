@@ -9,7 +9,7 @@ find_package(benchmark REQUIRED)
 add_executable(itch_parser 
             itch_parser.cpp
             parser_logic.cpp
-            order_book.cpp
+            order_book_fast.cpp
 )
 
 target_link_libraries(itch_parser benchmark::benchmark)

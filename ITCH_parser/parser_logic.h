@@ -2,8 +2,10 @@
 #define PARSER
 
 #include <cstdint>
+#include <cstddef>
 
 struct AddOrder{
+    uint16_t stock_locate;
     uint64_t timestamp;
     std::string stock;
     uint64_t ref;
@@ -17,6 +19,7 @@ struct AddOrder{
 };
 
 struct ExecutedOrder{
+    uint16_t stock_locate;
     uint64_t timestamp;
     uint64_t ref;
     uint32_t executed_shares;
@@ -27,6 +30,7 @@ struct ExecutedOrder{
 };
 
 struct ExecutedWithPriceOrder{
+    uint16_t stock_locate;
     uint64_t timestamp;
     uint64_t ref;
     uint32_t executed_shares;
@@ -38,6 +42,7 @@ struct ExecutedWithPriceOrder{
 };
 
 struct CancelOrder{
+    uint16_t stock_locate;
     uint64_t timestamp;
     uint64_t ref;
     uint32_t cancelled_shares;
@@ -48,6 +53,7 @@ struct CancelOrder{
 };
 
 struct DeleteOrder{
+    uint16_t stock_locate;
     uint64_t timestamp;
     uint64_t ref;
 
@@ -58,6 +64,7 @@ struct DeleteOrder{
 
 
 struct ReplaceOrder{
+    uint16_t stock_locate;
     uint64_t timestamp;
     uint64_t ref;
     uint64_t new_ref;
@@ -67,6 +74,10 @@ struct ReplaceOrder{
     void print_struct();
 
     void validate_info();
+};
+
+struct StockDirectory{
+    uint16_t stock_locate;
 };
 
 
@@ -87,5 +98,7 @@ CancelOrder ParseCancelOrder(const unsigned char* message);
 DeleteOrder ParseDeleteOrder(const unsigned char* message);
 
 ReplaceOrder ParseReplaceOrder(const unsigned char* message);
+
+uint16_t FindMaxStockLocateCode(const unsigned char* data, size_t size);
 
 #endif

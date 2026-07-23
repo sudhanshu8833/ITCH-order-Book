@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <cstdio>
 #include "parser_logic.h"
-#include "order_book.h"
+#include "order_book_fast.h"
 #include <string_view>
 #define SAMPLE_SIZE 100
 
@@ -36,9 +36,13 @@ const unsigned char* get_bin_to_char_ds(int fd, size_t size){
 }
 
 int parse_message(const unsigned char* data, int size){
-    int i =0;
+    int i = 0;
     int count = 0;
-    OrderBook order_book;
+
+    uint16_t max_stock_locate = FindMaxStockLocateCode(data, static_cast<size_t>(size));
+    std::cout<< "Max stock locate "<< max_stock_locate<<std::endl;
+
+    OrderBook order_book{max_stock_locate};
     while(i < size){
         int length = read_be16(&data[i]);
         count++;
@@ -95,9 +99,9 @@ int parse_message(const unsigned char* data, int size){
             }
         }
 
-        if (count % 1 == 0){
-            book_map b = order_book.get_book("AMZN", 10);
-            b.print_struct();
+        if (count % 10 == 0){
+            book_map b = order_book.get_book(static_cast<uint16_t>(8047),10);
+            // b.print_struct();
         }
         i+=length;
     }
