@@ -95,9 +95,9 @@ int parse_message(const unsigned char* data, int size){
             }
         }
 
-        if (count % 1 == 0){
-            book_map b = order_book.get_book("AMZN", 10);
-            b.validate_book();
+        if (count % 100 == 0){
+            book_map b = order_book.get_book(393, 10);
+            b.print_struct();
         }
         i+=length;
     }

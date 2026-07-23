@@ -26,7 +26,7 @@ uint16_t read_be16(const unsigned char* p){
 }
 
 uint64_t read_be48(const unsigned char* p){
-    uint64_t v;
+    uint64_t v = 0;
     for(int i = 0; i< 6; ++i){
         v = (v << 8) | p[i];
     }
@@ -38,6 +38,7 @@ uint64_t read_be48(const unsigned char* p){
 void AddOrder::print_struct(){
     std::ostringstream ss;
     ss<< "Add Order Information: "<<std::endl;
+    ss<< "stock_locate: "<< this->stock_locate<<std::endl;
     ss<< "timestamp: "<< this->timestamp<<std::endl;
     ss<< "stock: "<< this->stock<<std::endl;
     ss<< "ref: " << this->ref << std::endl;
@@ -57,6 +58,7 @@ void AddOrder::validate_info(){
 void ExecutedOrder::print_struct(){
     std::ostringstream ss;
     ss<< "Executed Order Information: "<<std::endl;
+    ss<< "stock_locate: "<< this->stock_locate<<std::endl;
     ss<< "timestamp: "<< this->timestamp<<std::endl;
     ss<< "ref: " << this->ref << std::endl;
     ss<< "executed_shares: "<< this->executed_shares << std::endl;
@@ -72,6 +74,7 @@ void ExecutedOrder::validate_info(){
 void ExecutedWithPriceOrder::print_struct(){
     std::ostringstream ss;
     ss<< "Executed With Price Order Information: "<<std::endl;
+    ss<< "stock_locate: "<< this->stock_locate<<std::endl;
     ss<< "timestamp: "<< this->timestamp<<std::endl;
     ss<< "ref: " << this->ref << std::endl;
     ss<< "executed_shares: "<< this->executed_shares << std::endl;
@@ -89,6 +92,7 @@ void ExecutedWithPriceOrder::validate_info(){
 void CancelOrder::print_struct(){
     std::ostringstream ss;
     ss<< "Cancel Order Information: "<<std::endl;
+    ss<< "stock_locate: "<< this->stock_locate<<std::endl;
     ss<< "timestamp: "<< this->timestamp<<std::endl;
     ss<< "ref: " << this->ref << std::endl;
     ss<< "cancelled_shares: "<< this->cancelled_shares << std::endl;
@@ -104,6 +108,7 @@ void CancelOrder::validate_info(){
 void DeleteOrder::print_struct(){
     std::ostringstream ss;
     ss<< "Delete Order Information: "<<std::endl;
+    ss<< "stock_locate: "<< this->stock_locate<<std::endl;
     ss<< "timestamp: "<< this->timestamp<<std::endl;
     ss<< "ref: " << this->ref << std::endl;
     std::cout<< ss.str()<<std::endl;
@@ -118,6 +123,7 @@ void DeleteOrder::validate_info(){
 void ReplaceOrder::print_struct(){
     std::ostringstream ss;
     ss<< "Replace Order Information: "<<std::endl;
+    ss<< "stock_locate: "<< this->stock_locate<<std::endl;
     ss<< "timestamp: "<< this->timestamp<<std::endl;
     ss<< "ref: " << this->ref << std::endl;
     ss<< "new_ref: "<< this->new_ref << std::endl;
@@ -138,65 +144,64 @@ AddOrder ParseAddOrderMessage(const unsigned char* message){
     std::string_view sym(reinterpret_cast<const char*>(&message[0] + 24), 8);
     sym = sym.substr(0, sym.find_last_not_of(' ') + 1);
     AddOrder o{
-        read_be48(&message[5]),
-        std::string(sym),
-        read_be64(&message[11]),
-        read_be32(&message[32]),
-        read_be32(&message[20]),
-        message[19]
+        .stock_locate = read_be16(&message[1]),
+        .timestamp = read_be48(&message[5]),
+        .stock = std::string(sym),
+        .ref = read_be64(&message[11]),
+        .price = read_be32(&message[32]),
+        .shares = read_be32(&message[20]),
+        .side = message[19]
     };
     return o;
 }
 
 ExecutedOrder ParseExecutedOrderMessage(const unsigned char* message){
     ExecutedOrder o{
-        read_be48(&message[5]),
-        read_be64(&message[11]),
-        read_be32(&message[19])
+        .stock_locate = read_be16(&message[1]),
+        .timestamp = read_be48(&message[5]),
+        .ref = read_be64(&message[11]),
+        .executed_shares = read_be32(&message[19])
     };
     return o;
 }
 
 ExecutedWithPriceOrder ParseExecutedWithPriceOrderMessage(const unsigned char* message){
     ExecutedWithPriceOrder o{
-        read_be48(&message[5]),
-        read_be64(&message[11]),
-        read_be32(&message[19]),
-        read_be32(&message[32])
+        .stock_locate = read_be16(&message[1]),
+        .timestamp = read_be48(&message[5]),
+        .ref = read_be64(&message[11]),
+        .executed_shares = read_be32(&message[19]),
+        .execution_price = read_be32(&message[32])
     };
     return o;
 }
 
 CancelOrder ParseCancelOrder(const unsigned char* message){
     CancelOrder c{
-        read_be48(&message[5]),
-        read_be64(&message[11]),
-        read_be32(&message[19])
+        .stock_locate = read_be16(&message[1]),
+        .timestamp = read_be48(&message[5]),
+        .ref = read_be64(&message[11]),
+        .cancelled_shares = read_be32(&message[19])
     };
     return c;
 }
 DeleteOrder ParseDeleteOrder(const unsigned char* message){
     DeleteOrder d{
-        read_be48(&message[5]),
-        read_be64(&message[11])
+        .stock_locate = read_be16(&message[1]),
+        .timestamp = read_be48(&message[5]),
+        .ref = read_be64(&message[11])
     };
     return d;
 }
 
 ReplaceOrder ParseReplaceOrder(const unsigned char* message){
     ReplaceOrder o{
-        read_be48(&message[5]),
-        read_be64(&message[11]),
-        read_be64(&message[19]),
-        read_be32(&message[27]),
-        read_be32(&message[31])
+        .stock_locate = read_be16(&message[1]),
+        .timestamp = read_be48(&message[5]),
+        .ref = read_be64(&message[11]),
+        .new_ref = read_be64(&message[19]),
+        .shares = read_be32(&message[27]),
+        .price = read_be32(&message[31])
     };
     return o;
 }
-
-
-
-
-
-
-
