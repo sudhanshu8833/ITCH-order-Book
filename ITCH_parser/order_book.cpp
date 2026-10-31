@@ -43,7 +43,13 @@ void OrderBook::delete_from_book(std::vector<OrderBookNode> &book_array, uint32_
     );
 
     if (it != book_array.end() && it->price == limit_price){
-        it->shares += shares;
+        if (shares > it->shares){
+            error_with_log("removing more shares than the level holds");
+        }
+        it->shares -= shares;
+        if (it->shares == 0){
+            book_array.erase(it);
+        }
     } else {
         error_with_log("no limit price present");
     }
@@ -137,13 +143,13 @@ void OrderBook::delete_order(DeleteOrder &d){
     auto &order_node = this->order_map.at(d.ref);
 
     order_node.status = OrderStatus::CANCELLED;
-    int shares_to_cancel = order_node.available_shares();
+    uint32_t shares_to_cancel = order_node.available_shares();
     order_node.cancel_shares += (shares_to_cancel);
 
     auto &book = (order_node.side == 'B' ? bid : ask);
     auto &book_array = book.at(order_node.stock_locate);
 
-    delete_from_book(book_array, order_node.limit_price, order_node.available_shares());
+    delete_from_book(book_array, order_node.limit_price, shares_to_cancel);
     this->order_map.erase(d.ref);
 }
 
@@ -171,6 +177,9 @@ void OrderBook::replace_order(ReplaceOrder &r){
 
 book_map OrderBook::get_book(uint16_t stock_locate, int levels){
     book_map bm {};
+    if (stock_locate >= this->bid.size()){
+        return bm;
+    }
 
     auto &bid_book = this->bid[stock_locate];
 
@@ -185,7 +194,7 @@ book_map OrderBook::get_book(uint16_t stock_locate, int levels){
     if (!ask_book.empty()){
         int count = 0;
         for(auto it = ask_book.begin(); it != ask_book.end() && count< levels; ++it, ++count){
-            bm.bid.push_back({it->price, it->shares});
+            bm.ask.push_back({it->price, it->shares});
         }    
     }
 

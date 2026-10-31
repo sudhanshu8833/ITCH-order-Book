@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <map>
 #include <cstdint>
+#include <cstddef>
+#include <iostream>
+#include <string_view>
 #include <vector>
 
 struct OrderBookNode{
@@ -62,8 +65,9 @@ struct book_map {
     }
 
     inline void validate_book(){
-        if (!bid.empty() && !ask.empty() && ask.back().first <= bid.front().first){
-            error_with_log("Error: last ask is less then first bid");
+        // bid.front() is the best bid and ask.front() the best ask; a book is crossed when they meet.
+        if (!bid.empty() && !ask.empty() && ask.front().first <= bid.front().first){
+            error_with_log("Error: best ask is not above best bid");
         }
     }
 };
@@ -80,6 +84,7 @@ class OrderBook {
         void replace_order(ReplaceOrder &r);
 
         book_map get_book(uint16_t stock_locate, int levels);
+        size_t live_orders() const { return order_map.size(); }
         void add_to_book(std::vector<OrderBookNode> &book_array, uint32_t limit_price, uint32_t shares); 
         void delete_from_book(std::vector<OrderBookNode> &book_array, uint32_t limit_price, uint32_t shares);
 
