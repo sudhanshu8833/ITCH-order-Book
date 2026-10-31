@@ -1,9 +1,13 @@
+# Data files: not redistributed (provenance of sample files is not recorded here)
 **/partial.gz
 **/sample_itch50.bin
 *.gz
 *.bin
+# Build output and editor/OS noise
 build/
 **/build/
-**/result.md
-results.md
+a.out
+.DS_Store
+__pycache__/
+*.pyc
 .cursor/
