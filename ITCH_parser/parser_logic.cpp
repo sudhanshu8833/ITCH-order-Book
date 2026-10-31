@@ -1,7 +1,7 @@
 #include <iostream>
-#include <sys/mman.h>
 #include <string_view>
-#include <endian.h>
+#include <algorithm>
+#include "byte_order.h"
 #include <cstdint>
 #include <cstring>
 #include <sstream>
@@ -10,19 +10,19 @@
 uint32_t read_be32(const unsigned char* p) {
     uint32_t v;
     std::memcpy(&v, p, 4);
-    return be32toh(v);
+    return itch_be32toh(v);
 }
 
 uint64_t read_be64(const unsigned char* p) {
     uint64_t v;
     std::memcpy(&v, p, 8);
-    return be64toh(v);
+    return itch_be64toh(v);
 }
 
 uint16_t read_be16(const unsigned char* p){
     uint16_t v;
     std::memcpy(&v, p, 2);
-    return be16toh(v);
+    return itch_be16toh(v);
 }
 
 uint64_t read_be48(const unsigned char* p){
@@ -148,7 +148,7 @@ AddOrder ParseAddOrderMessage(const unsigned char* message){
         .ref = read_be64(&message[11]),
         .price = read_be32(&message[32]),
         .shares = read_be32(&message[20]),
-        .side = message[19]
+        .side = static_cast<char>(message[19])
     };
     return o;
 }

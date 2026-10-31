@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <unordered_map>
-#include <endian.h>
 #include <cstring>
 #include <sstream>
 #include <cstdint>
@@ -14,12 +13,15 @@
 #include "parser_logic.h"
 #include "order_book.h"
 #include <string_view>
+#include <algorithm>
 #define SAMPLE_SIZE 100
 
-int get_sample_bin(){
-    int fd = open("sample_itch50.bin", O_RDONLY);
+// Usage: itch_parser [path/to/itch50.bin] [stock_locate_to_snapshot]
+// Defaults keep the original behaviour: sample_itch50.bin in the working directory, locate 393.
+int get_sample_bin(const char* path){
+    int fd = open(path, O_RDONLY);
     if (fd < 0){
-        std::cout<<"File Reading Failed"<<std::endl;
+        std::cout<<"File Reading Failed: "<<path<<std::endl;
         exit(1);
     }
     return fd;
@@ -35,12 +37,14 @@ const unsigned char* get_bin_to_char_ds(int fd, size_t size){
     return data;
 }
 
-int parse_message(const unsigned char* data, int size, int max_stock_locate){
-    int i =0;
+int parse_message(const unsigned char* data, size_t size, int max_stock_locate, uint16_t snapshot_locate){
+    size_t i = 0;
     int count = 0;
     OrderBook order_book {max_stock_locate};
-    while(i < size){
-        int length = read_be16(&data[i]);
+    // Each frame is a 2-byte big-endian length followed by the message. Stop at a truncated tail.
+    while(i + 2 <= size){
+        size_t length = read_be16(&data[i]);
+        if (length == 0 || i + 2 + length > size) break;
         count++;
         i+=2;
         switch(data[i]){
@@ -96,7 +100,7 @@ int parse_message(const unsigned char* data, int size, int max_stock_locate){
         }
 
         if (count % 100 == 0){
-            book_map b = order_book.get_book(393, 10);
+            book_map b = order_book.get_book(snapshot_locate, 10);
             b.validate_book();
         }
         i+=length;
@@ -105,8 +109,10 @@ int parse_message(const unsigned char* data, int size, int max_stock_locate){
 }
 
 
-int main(){
-    int fd = get_sample_bin();
+int main(int argc, char** argv){
+    const char* path = argc > 1 ? argv[1] : "sample_itch50.bin";
+    uint16_t snapshot_locate = argc > 2 ? static_cast<uint16_t>(std::stoi(argv[2])) : 393;
+    int fd = get_sample_bin(path);
 
     struct stat st;
     fstat(fd, &st);
@@ -124,11 +130,11 @@ int main(){
         std::cout<<"Sample Count: "<< current_count<<std::endl;
         current_count++;
         auto t0 = std::chrono::steady_clock::now();
-        int message_count = parse_message(data, size - 50, max_stock_locate);
+        int message_count = parse_message(data, size, max_stock_locate, snapshot_locate);
         auto t1 = std::chrono::steady_clock::now();
     
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-        result.push_back(duration / message_count);
+        result.push_back(static_cast<double>(duration) / message_count);
     }
 
     std::sort(result.begin(), result.end());
@@ -140,6 +146,7 @@ int main(){
         {"99.9", 0.999 * SAMPLE_SIZE}
     };
 
+    ss<< "messages per replay: "<< parse_message(data, size, max_stock_locate, snapshot_locate) <<std::endl;
     ss<< "50th percentile: "<< result[(int)m["50"]]<<std::endl;
     ss << "99th percentile: "<< result[(int)m["99"]] << std::endl;
     ss<< "99.9 percentile: "<< result[(int)m["99.9"]] << std::endl;
